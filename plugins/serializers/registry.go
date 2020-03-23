@@ -2,7 +2,6 @@ package serializers
 
 import (
 	"fmt"
-	"github.com/influxdata/telegraf/plugins/serializers/ubazzar"
 	"time"
 
 	"github.com/influxdata/telegraf"
@@ -13,6 +12,7 @@ import (
 	"github.com/influxdata/telegraf/plugins/serializers/nowmetric"
 	"github.com/influxdata/telegraf/plugins/serializers/prometheus"
 	"github.com/influxdata/telegraf/plugins/serializers/splunkmetric"
+	"github.com/influxdata/telegraf/plugins/serializers/ubazzar"
 	"github.com/influxdata/telegraf/plugins/serializers/wavefront"
 )
 

@@ -673,6 +673,7 @@ func TestBasicStatsWithStartTime(t *testing.T) {
 	)
 
 	aggregator := NewBasicStats()
+	aggregator.Stats = []string{"start_time"}
 	aggregator.Log = testutil.Logger{}
 	aggregator.getConfiguredStats()
 
@@ -685,6 +686,6 @@ func TestBasicStatsWithStartTime(t *testing.T) {
 
 	assert.True(t, acc.HasField("m", "start_time"))
 	acc.AssertContainsFields(t, "m", map[string]interface{}{
-		"start_time": initialTime.Unix(),
+		"start_time": initialTime.Format(time.RFC3339),
 	})
 }

@@ -2,7 +2,7 @@ package ubazzar
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -33,7 +33,10 @@ func NewSerializer(timestampUnits time.Duration) (*serializer, error) {
 }
 
 func (s *serializer) Serialize(metric telegraf.Metric) ([]byte, error) {
-	e := s.createObject(metric)
+	e, err := s.createObject(metric)
+	if err != nil {
+		return []byte{}, err
+	}
 	serialized, err := json.Marshal(e)
 	if err != nil {
 		return []byte{}, err
@@ -46,7 +49,10 @@ func (s *serializer) Serialize(metric telegraf.Metric) ([]byte, error) {
 func (s *serializer) SerializeBatch(metrics []telegraf.Metric) ([]byte, error) {
 	objects := make([]interface{}, 0, len(metrics))
 	for _, metric := range metrics {
-		e := s.createObject(metric)
+		e, err := s.createObject(metric)
+		if err != nil {
+			return []byte{}, err
+		}
 		objects = append(objects, e)
 	}
 
@@ -61,15 +67,14 @@ func (s *serializer) SerializeBatch(metrics []telegraf.Metric) ([]byte, error) {
 	return serialized, nil
 }
 
-func (s *serializer) createObject(metric telegraf.Metric) *event {
+func (s *serializer) createObject(metric telegraf.Metric) (*event, error) {
 	eventID, _ := uuid.NewV4()
 	service, _ := metric.GetTag("service")
 	customerID, _ := metric.GetTag("customer_id")
 	unitOfMeasure, _ := metric.GetTag("unit_of_measure")
 	startTime, ok := metric.GetField("start_time")
 	if !ok {
-		fmt.Println("UNABLE TO GET STARTITME")
-		//startTime = time.Now().Add(time.Second * -5).Format(time.RFC3339)
+		return nil, errors.New("missing required field start_time")
 	}
 
 	filteredTags := make(map[string]string)
@@ -92,7 +97,7 @@ func (s *serializer) createObject(metric telegraf.Metric) *event {
 		MetaData:          filteredTags,
 	}
 
-	return e
+	return e, nil
 }
 
 func getQuantity(metric telegraf.Metric) float64 {

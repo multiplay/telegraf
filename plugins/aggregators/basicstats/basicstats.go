@@ -26,6 +26,7 @@ type configuredStats struct {
 	sum               bool
 	diff              bool
 	non_negative_diff bool
+	start_time        bool
 }
 
 func NewBasicStats() *BasicStats {
@@ -151,7 +152,9 @@ func (b *BasicStats) Add(in telegraf.Metric) {
 func (b *BasicStats) Push(acc telegraf.Accumulator) {
 	for _, aggregate := range b.cache {
 		fields := map[string]interface{}{}
-		fields["start_time"] = aggregate.startTime.Format(time.RFC3339)
+		if b.statsConfig.start_time {
+			fields["start_time"] = aggregate.startTime.Format(time.RFC3339)
+		}
 		for k, v := range aggregate.fields {
 
 			if b.statsConfig.count {
@@ -221,6 +224,8 @@ func (b *BasicStats) parseStats() *configuredStats {
 			parsed.diff = true
 		case "non_negative_diff":
 			parsed.non_negative_diff = true
+		case "start_time":
+			parsed.start_time = true
 
 		default:
 			b.Log.Warnf("Unrecognized basic stat %q, ignoring", name)
