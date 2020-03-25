@@ -4,7 +4,7 @@
   ## Environment variables can be used as tags, and throughout the config file
   # user = "$USER"
 customer_id = "X"
-service = "multiplay_billing"
+service = "MP"
 
 [agent]
   interval = "10s"
@@ -21,7 +21,7 @@ service = "multiplay_billing"
 
  [[outputs.file]] 
   files = ["stdout", "/tmp/metrics.out"]
-  data_format = "ubazzar"
+  data_format = "ubazaar"
   fieldpass = ["quantity", "start_time"]
 
 # Egress
@@ -35,31 +35,10 @@ service = "multiplay_billing"
    stats = ["non_negative_diff", "diff", "start_time"]
    fieldpass = ["bytes_sent"]
    [aggregators.basicstats.tags]
-     unit_of_measure = "net-eu-west-mb-egress"
+     unit_of_measure = "net-eu-west-gb-egress"
 
  [[processors.byteconvert]]
   field_src = "bytes_sent_diff"
   field_name = "quantity"
-  format = "mb"
+  format = "GiB"
   namepass = ["net"]
-
- ##Ingress
- [[inputs.net]]
-  interfaces = ["lo0"]
-  fieldpass = ["bytes_recv"]
-
- [[aggregators.basicstats]]
-   period = "300s"
-   drop_original = true 
-   stats = ["diff", "start_time"]
-   fieldpass = ["bytes_recv"]
-   [aggregators.basicstats.tags]
-     unit_of_measure = "net-eu-west-mb-ingress"
-
-
- [[processors.byteconvert]]
-  field_src = "bytes_recv_diff"
-  field_name = "quantity"
-  format = "mb"
-  namepass = ["net"]
-

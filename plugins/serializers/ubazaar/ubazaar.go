@@ -1,28 +1,36 @@
-package ubazzar
+package ubazaar
 
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
-
 	"github.com/influxdata/telegraf"
 )
+
+type missingTagErr struct {
+	tag string
+}
+
+func (e *missingTagErr) Error() string {
+	return fmt.Sprintf("missing required tag: %s", e.tag)
+}
 
 type serializer struct {
 	TimestampUnits time.Duration
 }
 
 type event struct {
-	EventID           string            `json:"event_id"`
-	ServiceCustomerID string            `json:"service_customer_id"`
+	EventID           string            `json:"eventId"`
+	ServiceCustomerID string            `json:"serviceCustomerID"`
 	Service           string            `json:"service"`
-	UnitOfMeasure     string            `json:"unit_of_measure"`
+	UnitOfMeasure     string            `json:"unitOfMeasure"`
 	Quantity          float64           `json:"quantity"`
-	StartTime         string            `json:"start_time"`
-	EndTime           string            `json:"end_time"`
-	MetaData          map[string]string `json:"meta_data"`
+	StartTime         string            `json:"startTime"`
+	EndTime           string            `json:"endTime"`
+	MetaData          map[string]string `json:"metadata"`
 }
 
 func NewSerializer(timestampUnits time.Duration) (*serializer, error) {
@@ -68,13 +76,25 @@ func (s *serializer) SerializeBatch(metrics []telegraf.Metric) ([]byte, error) {
 }
 
 func (s *serializer) createObject(metric telegraf.Metric) (*event, error) {
-	eventID, _ := uuid.NewV4()
-	service, _ := metric.GetTag("service")
-	customerID, _ := metric.GetTag("customer_id")
-	unitOfMeasure, _ := metric.GetTag("unit_of_measure")
+	eventID := uuid.Must(uuid.NewV4())
+	service, ok := metric.GetTag("service")
+	if !ok {
+		return nil, &missingTagErr{"service"}
+	}
+
+	customerID, ok := metric.GetTag("customer_id")
+	if !ok {
+		return nil, &missingTagErr{"customer_id"}
+	}
+
+	unitOfMeasure, ok := metric.GetTag("unit_of_measure")
+	if !ok {
+		return nil, &missingTagErr{"unit_of_measure"}
+	}
+
 	startTime, ok := metric.GetField("start_time")
 	if !ok {
-		return nil, errors.New("missing required field start_time")
+		return nil, errors.New("missing required field: start_time")
 	}
 
 	filteredTags := make(map[string]string)

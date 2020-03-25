@@ -15,7 +15,7 @@ const sampleConfig = `
   field_name = "total_net_usage_mb"
 
   # format to convert to
-  format = "mb"
+  format = "mib"
 `
 
 type byteConvert struct {
@@ -66,11 +66,11 @@ func toFloat64(v interface{}) float64 {
 
 func (d *byteConvert) convert(bytes float64) float64 {
 	switch strings.ToLower(d.Format) {
-	case "kb":
+	case "kib":
 		return bytes / 1024
-	case "mb":
+	case "mib":
 		return bytes / 1024 / 1024
-	case "gb":
+	case "gib":
 		return bytes / 1024 / 1024 / 1024
 	}
 	return 0

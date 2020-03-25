@@ -1,4 +1,4 @@
-package ubazzar
+package ubazaar
 
 import (
 	"encoding/json"
@@ -14,6 +14,7 @@ func TestSerializeMetricFloat(t *testing.T) {
 	now := time.Now()
 	tags := map[string]string{
 		"customer_id":     "testCustomer",
+		"service":         "MP",
 		"unit_of_measure": "na-net-gb",
 	}
 	fields := map[string]interface{}{
@@ -30,14 +31,14 @@ func TestSerializeMetricFloat(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Get UUID from serialized metric
-	ubazzarEvent := &event{}
-	err = json.Unmarshal(buf, ubazzarEvent)
+	ubazaarEvent := &event{}
+	err = json.Unmarshal(buf, ubazaarEvent)
 	assert.NoError(t, err)
 
 	expectedMetric := event{
-		EventID:           ubazzarEvent.EventID,
+		EventID:           ubazaarEvent.EventID,
 		ServiceCustomerID: "testCustomer",
-		Service:           "",
+		Service:           "MP",
 		UnitOfMeasure:     "na-net-gb",
 		Quantity:          25.0,
 		StartTime:         now.Add(time.Second * -30).Format(time.RFC3339),
