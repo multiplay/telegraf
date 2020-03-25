@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"cloud.google.com/go/pubsub"
+	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/internal"
 	"github.com/influxdata/telegraf/plugins/outputs"
@@ -29,11 +30,6 @@ const sampleConfig = `
   ## Read more about them here:
   ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_INPUT.md
   data_format = "influx"
-
-  ## Optional. Filepath for GCP credentials JSON file to authorize calls to
-  ## PubSub APIs. If not set explicitly, Telegraf will attempt to use
-  ## Application Default Credentials, which is preferred.
-  # credentials_file = "path/to/my/creds.json"
 
   ## Optional. If true, will send all metrics per write in one PubSub message.
   # send_batched = true
@@ -67,10 +63,9 @@ const sampleConfig = `
 `
 
 type PubSub struct {
-	CredentialsFile string            `toml:"credentials_file"`
-	Project         string            `toml:"project"`
-	Topic           string            `toml:"topic"`
-	Attributes      map[string]string `toml:"attributes"`
+	Project    string            `toml:"project"`
+	Topic      string            `toml:"topic"`
+	Attributes map[string]string `toml:"attributes"`
 
 	SendBatched           bool              `toml:"send_batched"`
 	PublishCountThreshold int               `toml:"publish_count_threshold"`
@@ -109,10 +104,53 @@ func (ps *PubSub) Connect() error {
 		return fmt.Errorf(`"project" is required`)
 	}
 
-	fmt.Println("**connecting**")
+	// Initialise the Vault client.
+	c, err := vaultapi.NewClient(&vaultapi.Config{
+		Address: "http://127.0.0.1:8200",
+	})
+	if err != nil {
+		return err
+	}
+
+	// Login via the AppRole auth method.
+	data := map[string]interface{}{
+		"role_id":   "904b9699-25f1-f3e0-b980-c70241d08dc9",
+		"secret_id": "cb6ea1f5-d1e1-7776-3ca6-cd4f127bb361",
+	}
+	resp, err := c.Logical().Write("auth/approle/login", data)
+	if err != nil {
+		return err
+	}
+	if resp.Auth == nil {
+		return fmt.Errorf("vault: no auth info returned")
+	}
+
+	// Update the client with the AppRole auth token.
+	tkn, err := resp.TokenID()
+	if err != nil {
+		return err
+	}
+	c.SetToken(tkn)
+
+	// Retrieve the secret.
+	sec, err := c.Logical().Read("secret/data/pubsub-credentials")
+	if err != nil {
+		return err
+	} else if sec == nil {
+		return fmt.Errorf(
+			"vault: could not determine secret: no data returned",
+		)
+	}
+
+	v, ok := sec.Data["data"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf(
+			"vault: could not determine secret: unexpected data structure",
+		)
+	}
 
 	if ps.stubTopic == nil {
-		return ps.initPubSubClient()
+		return ps.initPubSubClient(v["value"].([]byte))
 	} else {
 		return nil
 	}
@@ -149,23 +187,18 @@ func (ps *PubSub) Write(metrics []telegraf.Metric) error {
 	return ps.waitForResults(cctx, cancel)
 }
 
-func (ps *PubSub) initPubSubClient() error {
-	var credsOpt option.ClientOption
-	if ps.CredentialsFile != "" {
-		credsOpt = option.WithCredentialsFile(ps.CredentialsFile)
-	} else {
-		creds, err := google.FindDefaultCredentials(context.Background(), pubsub.ScopeCloudPlatform)
-		if err != nil {
-			return fmt.Errorf(
-				"unable to find GCP Application Default Credentials: %v."+
-					"Either set ADC or provide CredentialsFile config", err)
-		}
-		credsOpt = option.WithCredentials(creds)
+func (ps *PubSub) initPubSubClient(creds []byte) error {
+	gc, err := google.CredentialsFromJSON(
+		context.Background(), creds, pubsub.ScopeCloudPlatform,
+	)
+	if err != nil {
+		return err
 	}
+
 	client, err := pubsub.NewClient(
 		context.Background(),
 		ps.Project,
-		credsOpt,
+		option.WithCredentials(gc),
 		option.WithScopes(pubsub.ScopeCloudPlatform),
 		option.WithUserAgent(internal.ProductToken()),
 	)
