@@ -3,63 +3,67 @@
   # rack = "1a"
   ## Environment variables can be used as tags, and throughout the config file
   # user = "$USER"
-customer_id = "X"
-service = "multiplay_billing"
+  customer_id = "X"
+  service = "multiplay_billing"
 
 [agent]
   interval = "10s"
-  round_interval = true 
+  round_interval = true
   metric_batch_size = 1000
   metric_buffer_limit = 10000
   collection_jitter = "0s"
-  flush_interval = "60s"
+  flush_interval = "10s"
   flush_jitter = "0s"
   precision = ""
   hostname = ""
   omit_hostname = false
 
 
- [[outputs.file]] 
+[[outputs.file]]
   files = ["stdout", "/tmp/metrics.out"]
   data_format = "ubazzar"
   fieldpass = ["quantity", "start_time"]
 
+[[outputs.mp_cloud_pubsub]]
+  project = "my-project"
+  topic = "my-topic"
+  data_format = "ubazzar"
+
 # Egress
- [[inputs.net]]
-  interfaces = ["lo0"]
+[[inputs.net]]
+  interfaces = ["wlp59s0"]
   fieldpass = ["bytes_sent"]
 
 [[aggregators.basicstats]]
-   period = "300s"
-   drop_original = true
-   stats = ["non_negative_diff", "diff", "start_time"]
-   fieldpass = ["bytes_sent"]
-   [aggregators.basicstats.tags]
-     unit_of_measure = "net-eu-west-mb-egress"
+  period = "5s"
+  drop_original = true
+  stats = ["non_negative_diff", "diff", "start_time"]
+  fieldpass = ["bytes_sent"]
+  [aggregators.basicstats.tags]
+    unit_of_measure = "net-eu-west-mb-egress"
 
- [[processors.byteconvert]]
+[[processors.byteconvert]]
   field_src = "bytes_sent_diff"
   field_name = "quantity"
   format = "mb"
   namepass = ["net"]
 
- ##Ingress
- [[inputs.net]]
-  interfaces = ["lo0"]
+##Ingress
+[[inputs.net]]
+  interfaces = ["wlp59s0"]
   fieldpass = ["bytes_recv"]
 
- [[aggregators.basicstats]]
-   period = "300s"
-   drop_original = true 
-   stats = ["diff", "start_time"]
-   fieldpass = ["bytes_recv"]
-   [aggregators.basicstats.tags]
-     unit_of_measure = "net-eu-west-mb-ingress"
+[[aggregators.basicstats]]
+  period = "5s"
+  drop_original = true
+  stats = ["diff", "start_time"]
+  fieldpass = ["bytes_recv"]
+  [aggregators.basicstats.tags]
+    unit_of_measure = "net-eu-west-mb-ingress"
 
 
- [[processors.byteconvert]]
+[[processors.byteconvert]]
   field_src = "bytes_recv_diff"
   field_name = "quantity"
   format = "mb"
   namepass = ["net"]
-
