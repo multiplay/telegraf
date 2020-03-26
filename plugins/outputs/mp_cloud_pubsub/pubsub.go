@@ -31,6 +31,17 @@ const sampleConfig = `
   ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_INPUT.md
   data_format = "influx"
 
+  ## Required. Full URL to the Vault server.
+  vault_address = "http://127.0.0.1:8200"
+	
+  ## Required. Role ID of an AppRole that has appropriate access to the GCP
+  ## service account secret in Vault.
+  vault_role_id = "my-role-id"
+  
+  ## Required. Secret ID of an AppRole that has appropriate access to the GCP
+  ## service account secret in Vault.
+  vault_secret_id = "my-secret-id"
+
   ## Optional. If true, will send all metrics per write in one PubSub message.
   # send_batched = true
 
@@ -74,6 +85,10 @@ type PubSub struct {
 	PublishTimeout        internal.Duration `toml:"publish_timeout"`
 	Base64Data            bool              `toml:"base64_data"`
 
+	VaultAddress  string `toml:"vault_address"`
+	VaultRoleID   string `toml:"vault_role_id"`
+	VaultSecretID string `toml:"vault_secret_id"`
+
 	t topic
 	c *pubsub.Client
 
@@ -106,7 +121,7 @@ func (ps *PubSub) Connect() error {
 
 	// Initialise the Vault client.
 	c, err := vaultapi.NewClient(&vaultapi.Config{
-		Address: "http://127.0.0.1:8200",
+		Address: ps.VaultAddress,
 	})
 	if err != nil {
 		return err
@@ -114,8 +129,8 @@ func (ps *PubSub) Connect() error {
 
 	// Login via the AppRole auth method.
 	data := map[string]interface{}{
-		"role_id":   "904b9699-25f1-f3e0-b980-c70241d08dc9",
-		"secret_id": "cb6ea1f5-d1e1-7776-3ca6-cd4f127bb361",
+		"role_id":   ps.VaultRoleID,
+		"secret_id": ps.VaultSecretID,
 	}
 	resp, err := c.Logical().Write("auth/approle/login", data)
 	if err != nil {
@@ -150,7 +165,7 @@ func (ps *PubSub) Connect() error {
 	}
 
 	if ps.stubTopic == nil {
-		return ps.initPubSubClient(v["value"].([]byte))
+		return ps.initPubSubClient([]byte(v["value"].(string)))
 	} else {
 		return nil
 	}

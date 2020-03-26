@@ -28,6 +28,9 @@
   project = "my-project"
   topic = "my-topic"
   data_format = "ubazzar"
+  vault_address = "http://127.0.0.1:8200"
+  vault_role_id = "cdc88ffa-8963-805e-4b7b-0ae97c57c21b"
+  vault_secret_id = "130d066c-2068-02de-1d9c-03b5f55a075f"
 
 # Egress
 [[inputs.net]]
