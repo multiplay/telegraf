@@ -1,6 +1,7 @@
 package all
 
 import (
+	_ "github.com/influxdata/telegraf/plugins/processors/byteconvert"
 	_ "github.com/influxdata/telegraf/plugins/processors/clone"
 	_ "github.com/influxdata/telegraf/plugins/processors/converter"
 	_ "github.com/influxdata/telegraf/plugins/processors/date"
@@ -18,6 +19,4 @@ import (
 	_ "github.com/influxdata/telegraf/plugins/processors/template"
 	_ "github.com/influxdata/telegraf/plugins/processors/topk"
 	_ "github.com/influxdata/telegraf/plugins/processors/unpivot"
-	_ "github.com/influxdata/telegraf/plugins/processors/sum"
-	_ "github.com/influxdata/telegraf/plugins/processors/byteconvert"
 )

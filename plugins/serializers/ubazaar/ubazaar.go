@@ -10,20 +10,16 @@ import (
 	"github.com/influxdata/telegraf"
 )
 
-type missingTagErr struct {
-	tag string
+type errMissingTag string
+
+func (e errMissingTag) Error() string {
+	return fmt.Sprintf("missing required tag: %q", e)
 }
 
-func (e *missingTagErr) Error() string {
-	return fmt.Sprintf("missing required tag: %s", e.tag)
-}
-
-type serializer struct {
-	TimestampUnits time.Duration
-}
+type serializer struct{}
 
 type event struct {
-	EventID           string            `json:"eventId"`
+	EventID           string            `json:"eventID"`
 	ServiceCustomerID string            `json:"serviceCustomerID"`
 	Service           string            `json:"service"`
 	UnitOfMeasure     string            `json:"unitOfMeasure"`
@@ -33,11 +29,8 @@ type event struct {
 	MetaData          map[string]string `json:"metadata"`
 }
 
-func NewSerializer(timestampUnits time.Duration) (*serializer, error) {
-	s := &serializer{
-		TimestampUnits: truncateDuration(timestampUnits),
-	}
-	return s, nil
+func NewSerializer() (*serializer, error) {
+	return &serializer{}, nil
 }
 
 func (s *serializer) Serialize(metric telegraf.Metric) ([]byte, error) {
@@ -79,17 +72,17 @@ func (s *serializer) createObject(metric telegraf.Metric) (*event, error) {
 	eventID := uuid.Must(uuid.NewV4())
 	service, ok := metric.GetTag("service")
 	if !ok {
-		return nil, &missingTagErr{"service"}
+		return nil, errMissingTag("service")
 	}
 
 	customerID, ok := metric.GetTag("customer_id")
 	if !ok {
-		return nil, &missingTagErr{"customer_id"}
+		return nil, errMissingTag("customer_id")
 	}
 
 	unitOfMeasure, ok := metric.GetTag("unit_of_measure")
 	if !ok {
-		return nil, &missingTagErr{"unit_of_measure"}
+		return nil, errMissingTag("unit_of_measure")
 	}
 
 	startTime, ok := metric.GetField("start_time")

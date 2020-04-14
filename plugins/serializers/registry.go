@@ -119,7 +119,7 @@ func NewSerializer(config *Config) (Serializer, error) {
 	case "prometheus":
 		serializer, err = NewPrometheusSerializer(config)
 	case "ubazaar":
-		serializer, err = NewUBazaarSerializer(config.TimestampUnits)
+		serializer, err = NewUBazaarSerializer()
 	default:
 		err = fmt.Errorf("Invalid data format: %s", config.DataFormat)
 	}
@@ -157,8 +157,8 @@ func NewJsonSerializer(timestampUnits time.Duration) (Serializer, error) {
 	return json.NewSerializer(timestampUnits)
 }
 
-func NewUBazaarSerializer(timestampUnits time.Duration) (Serializer, error) {
-	return ubazaar.NewSerializer(timestampUnits)
+func NewUBazaarSerializer() (Serializer, error) {
+	return ubazaar.NewSerializer()
 }
 
 func NewCarbon2Serializer() (Serializer, error) {

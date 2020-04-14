@@ -8,35 +8,39 @@ import (
 )
 
 const sampleConfig = `
-  ## field to convert
+  ## Name of the field to source data from.
+  ##
+  ## The given field should contain a measurement represented in bytes.
   field_src = "total_net_usage_bytes"
 
-  ## new field to create
+  ## Name of the new field to contain the converted value
   field_name = "total_net_usage_mb"
 
-  # format to convert to
-  format = "mib"
+  ## Unit to convert the source value into.
+  ##
+  ## Allowed values: KiB, MiB, GiB 
+  convert_unit = "MiB"
 `
 
-type byteConvert struct {
-	FieldSrc  string `toml:"field_src"`
-	FieldName string `toml:"field_name"`
-	Format    string `toml:"format"`
+type ByteConvert struct {
+	FieldSrc    string `toml:"field_src"`
+	FieldName   string `toml:"field_name"`
+	ConvertUnit string `toml:"convert_unit"`
 }
 
-func (d *byteConvert) SampleConfig() string {
+func (d *ByteConvert) SampleConfig() string {
 	return sampleConfig
 }
 
-func (d *byteConvert) Description() string {
-	return "Dates measurements, tags, and fields that pass through this filter."
+func (d *ByteConvert) Description() string {
+	return "Convert a value in bytes to a configured unit."
 }
 
-func (d *byteConvert) Init() error {
+func (d *ByteConvert) Init() error {
 	return nil
 }
 
-func (d *byteConvert) Apply(in ...telegraf.Metric) []telegraf.Metric {
+func (d *ByteConvert) Apply(in ...telegraf.Metric) []telegraf.Metric {
 	for _, point := range in {
 		if field, ok := point.GetField(d.FieldSrc); ok {
 			v := d.convert(toFloat64(field))
@@ -64,8 +68,8 @@ func toFloat64(v interface{}) float64 {
 	return 0
 }
 
-func (d *byteConvert) convert(bytes float64) float64 {
-	switch strings.ToLower(d.Format) {
+func (d *ByteConvert) convert(bytes float64) float64 {
+	switch strings.ToLower(d.ConvertUnit) {
 	case "kib":
 		return bytes / 1024
 	case "mib":
@@ -78,6 +82,6 @@ func (d *byteConvert) convert(bytes float64) float64 {
 
 func init() {
 	processors.Add("byteconvert", func() telegraf.Processor {
-		return &byteConvert{}
+		return &ByteConvert{}
 	})
 }

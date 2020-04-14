@@ -25,7 +25,7 @@ func TestSerializeMetricFloat(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Serialize Metric
-	s, _ := NewSerializer(0)
+	s, _ := NewSerializer()
 	var buf []byte
 	buf, err = s.Serialize(m)
 	assert.NoError(t, err)
