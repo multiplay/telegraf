@@ -131,8 +131,6 @@
   ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_OUTPUT.md
   data_format = "ubazaar"
 
-  fieldpass = ["quantity", "start_time"]
-
 
 ###############################################################################
 #                            PROCESSOR PLUGINS                                #
