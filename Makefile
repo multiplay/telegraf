@@ -11,7 +11,7 @@ PREFIX := /usr/local
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT := $(shell git rev-parse --short HEAD)
 GOFILES ?= $(shell git ls-files '*.go')
-GOFMT ?= $(shell gofmt -l -s $(filter-out plugins/parsers/influx/machine.go, $(GOFILES), "vendor/"))
+GOFMT ?= $(shell gofmt -l -s $(filter-out plugins/parsers/influx/machine.go, $(GOFILES), $(wildcard vendor/*)))
 BUILDFLAGS ?=
 
 ifdef GOBIN
@@ -53,7 +53,7 @@ test:
 
 .PHONY: fmt
 fmt:
-	@gofmt -s -w $(filter-out plugins/parsers/influx/machine.go, $(GOFILES), "vendor/")
+	@gofmt -s -w $(filter-out plugins/parsers/influx/machine.go, $(GOFILES), $(wildcard vendor/*))
 
 .PHONY: fmtcheck
 fmtcheck:
