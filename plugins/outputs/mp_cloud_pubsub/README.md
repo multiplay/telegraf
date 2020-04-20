@@ -3,7 +3,7 @@
 The GCP PubSub plugin publishes metrics to a [Google Cloud PubSub][pubsub] topic
 as one of the supported [output data formats][].
 
-It is based upon the standard Telegraf [cloud_pubsub] plugin but loads the
+It is based upon the standard Telegraf [cloud_pubsub][] plugin but loads the
 credentials for Google Pub/Sub from an encrypted string in the config file.
 
 
@@ -66,3 +66,4 @@ generate it using `telegraf --usage cloud_pubsub`.
 
 [pubsub]: https://cloud.google.com/pubsub
 [output data formats]: /docs/DATA_FORMATS_OUTPUT.md
+[cloud_pubsub]: /plugins/outputs/cloud_pubsub
