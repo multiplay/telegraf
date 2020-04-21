@@ -1,9 +1,8 @@
 package mp_cloud_pubsub
 
 import (
-	"testing"
-
 	"encoding/base64"
+	"testing"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/influxdata/telegraf"

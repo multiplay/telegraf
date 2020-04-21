@@ -10,7 +10,7 @@ credentials for Google Pub/Sub from an encrypted string in the config file.
 ### Configuration
 
 This section contains the default TOML to configure the plugin.  You can
-generate it using `telegraf --usage cloud_pubsub`.
+generate it using `telegraf --usage mp_cloud_pubsub`.
 
 ```toml
 [[outputs.mp_cloud_pubsub]]
